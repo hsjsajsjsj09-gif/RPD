@@ -1,4 +1,4 @@
-name: 🚀 SEVER vanmanhgaming
+name: 🚀 SERVER vanmanhgaming
 
 
 
@@ -10,17 +10,45 @@ on:
 
       duration:
 
-        description: '🕐 Thời gian sử dụng'
+        description: 'Thời gian sử dụng'
 
         required: false
 
-        default: '2160h'
+        default: '1_Giờ_30_Phút_(90m)'
 
         type: choice
 
         options:
 
-        - '90_Ngày_(2160h)'
+          - '30_Phút_(30m)'
+
+          - '1_Giờ_(60m)'
+
+          - '1_Giờ_30_Phút_(90m)'
+
+          - '2_Giờ_(120m)'
+
+          - '2_Giờ_30_Phút_(150m)'
+
+          - '3_Giờ_(180m)'
+
+          - '3_Giờ_30_Phút_(210m)'
+
+          - '4_Giờ_(240m)'
+
+          - '4_Giờ_30_Phút_(270m)'
+
+          - '5_Giờ_(300m)'
+
+          - '5_Giờ_30_Phút_(330m)'
+
+          - '6_Giờ_(360m)'
+
+          - '30_Ngày_(43200m)'
+
+          - '60_Ngày_(86400m)'
+
+          - '90_Ngày_(129600m)'
 
 
 
@@ -34,27 +62,37 @@ jobs:
 
       # BANNER CHÀO MỪNG
 
-      - name: 🎯 KHỞI ĐỘNG HỆ THỐNG
+      - name: KHỞI ĐỘNG HỆ THỐNG
 
         shell: powershell
 
         run: |
 
-          Write-Host "`n🤖 vanmanhgaming RDP SERVER" -ForegroundColor Yellow
+          [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
-          Write-Host "⚡ Powered by AI STV" -ForegroundColor Green
+          $OutputEncoding = [System.Text.Encoding]::UTF8
 
-          Write-Host "🕒 Thời gian: ${{ github.event.inputs.duration }}" -ForegroundColor Magenta
+          chcp 65001 > $null
+
+          
+
+          Write-Host "`n vanmanhgaming RDP SERVER" -ForegroundColor Yellow
+
+          Write-Host " Powered by vanmanhgaming" -ForegroundColor Green
+
+          Write-Host " Thời gian: ${{ github.event.inputs.duration }}" -ForegroundColor Magenta
 
 
 
       # CẤU HÌNH HỆ THỐNG
 
-      - name: 🔧 CẤU HÌNH HỆ THỐNG
+      - name: CẤU HÌNH HỆ THỐNG
 
         shell: powershell
 
         run: |
+
+          [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0 -Force
 
@@ -70,7 +108,7 @@ jobs:
 
           Start-Service TermService
 
-          Write-Host "✅ Cấu hình RDP hoàn tất" -ForegroundColor Green
+          Write-Host " Cấu hình RDP hoàn tất" -ForegroundColor Green
 
 
 
@@ -172,7 +210,7 @@ jobs:
 
           try {
 
-              New-LocalUser -Name "vanmanhgaming" -Password $securePass -AccountNeverExpires -Description "AI STV Premium Account"
+              New-LocalUser -Name "vanmanhgaming" -Password $securePass -AccountNeverExpires -Description "vanmanhgaming Premium Account"
 
               Write-Host "│ ✅ Đã tạo user mới" -ForegroundColor Green
 
@@ -284,7 +322,7 @@ jobs:
 
           try {
 
-              & "$env:ProgramFiles\Tailscale\tailscale.exe" up --authkey=$env:TAILSCALE_AUTH_KEY --hostname=ai-stv-premium-$env:GITHUB_RUN_ID --accept-routes --accept-dns --reset
+              & "$env:ProgramFiles\Tailscale\tailscale.exe" up --authkey=$env:TAILSCALE_AUTH_KEY --hostname=vanmanhgaming-premium-$env:GITHUB_RUN_ID --accept-routes --accept-dns --reset
 
               Write-Host "│ ✅ Kết nối Tailscale thành công" -ForegroundColor Green
 
@@ -342,7 +380,85 @@ jobs:
 
 
 
-      # DỌN DẸP
+      - name: 🌐 KIỂM TRA KẾT NỐI ĐẾN TAILSCALE
+
+        run: |
+
+          # Kích hoạt Tailscale bằng Auth Key và đặt tên máy theo ID của GitHub Runner
+
+          Write-Host "🔧 Đang khởi tạo Tailscale..."
+
+          & "$env:ProgramFiles\Tailscale\tailscale.exe" up --authkey=${{ secrets.TAILSCALE_AUTH_KEY }} --hostname=gh-runner-$env:GITHUB_RUN_ID
+
+
+
+          # Chờ Tailscale cấp địa chỉ IP
+
+          Write-Host "⏳ Đang chờ Tailscale cấp IP..."
+
+          $tsIP = $null
+
+          $retries = 0
+
+
+
+          while (-not $tsIP -and $retries -lt 10) {
+
+              $tsIP = & "$env:ProgramFiles\Tailscale\tailscale.exe" ip -4
+
+              Start-Sleep -Seconds 5
+
+              $retries++
+
+          }
+
+
+
+          # Nếu không lấy được địa chỉ IP thì báo lỗi và thoát
+
+          if (-not $tsIP) {
+
+              Write-Error "❌ Không thể lấy địa chỉ IP từ Tailscale. Dừng tiến trình."
+
+              exit 1
+
+          }
+
+
+
+          Write-Host "✅ Đã nhận IP Tailscale: $tsIP" -ForegroundColor Green
+
+
+
+          # Xuất IP sang biến môi trường để dùng ở bước tiếp theo
+
+          echo "TAILSCALE_IP=$tsIP" >> $env:GITHUB_ENV
+
+
+
+      # KIỂM TRA KẾT NỐI RDP
+
+      - name: KIỂM TRA KẾT NỐI RDP
+
+        shell: pwsh
+
+        run: |
+
+          Write-Host " Địa chỉ Tailscale: $env:TAILSCALE_IP"
+
+          $testResult = Test-NetConnection -ComputerName $env:TAILSCALE_IP -Port 3389 -WarningAction SilentlyContinue
+
+          if (-not $testResult.TcpTestSucceeded) {
+
+              Write-Error " Không thể kết nối TCP đến cổng RDP (3389)."
+
+              exit 1
+
+          }
+
+
+
+     # DỌN DẸP
 
       - name: 🧹 DỌN DẸP FILE TẠM
 
@@ -353,44 +469,6 @@ jobs:
           Remove-Item "$env:TEMP\rdp_password.txt" -Force -ErrorAction SilentlyContinue
 
           Write-Host "🧹 Đã dọn dẹp file tạm thành công!" -ForegroundColor Green
-
-
-
-      # LẬP LỊCH TỰ ĐỘNG TẮT VPS SAU 90 NGÀY
-
-      - name: ⏳ LẬP LỊCH TỰ ĐỘNG TẮT VPS SAU 90 NGÀY
-
-        shell: powershell
-
-        run: |
-
-          # Chuyển sang UTF-8 để hiển thị tiếng Việt đúng
-
-          [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-
-
-
-          $taskName = "ShutdownVPSAfter90Days"
-
-          $shutdownTime = (Get-Date).AddDays(90) # 90 ngày
-
-
-
-          $timeStr = $shutdownTime.ToString("HH:mm")
-
-          $dateStr = $shutdownTime.ToString("MM/dd/yyyy")
-
-
-
-          # Tạo Task Scheduler
-
-          schtasks /Create /SC ONCE /TN $taskName /TR "shutdown.exe /s /t 60" /ST $timeStr /SD $dateStr /F
-
-
-
-          Write-Host "✅ Task Scheduler đã tạo: VPS sẽ tự động tắt sau 90 ngày"
-
-          Write-Host "   Thời gian tắt: $shutdownTime"
 
 
 
@@ -418,7 +496,35 @@ jobs:
 
           switch ($durationInput) {
 
-              "90_Ngày_(2160h)" { $totalMinutes = 2160 * 60; $displayTime = "90 ngày" }
+              "30_Phút_(30m)"              { $totalMinutes = 30;  $displayTime = "30 phút" }
+
+              "1_Giờ_(60m)"                { $totalMinutes = 60;  $displayTime = "1 giờ" }
+
+              "1_Giờ_30_Phút_(90m)"        { $totalMinutes = 90;  $displayTime = "1 giờ 30 phút" }
+
+              "2_Giờ_(120m)"               { $totalMinutes = 120; $displayTime = "2 giờ" }
+
+              "2_Giờ_30_Phút_(150m)"       { $totalMinutes = 150; $displayTime = "2 giờ 30 phút" }
+
+              "3_Giờ_(180m)"               { $totalMinutes = 180; $displayTime = "3 giờ" }
+
+              "3_Giờ_30_Phút_(210m)"       { $totalMinutes = 210; $displayTime = "3 giờ 30 phút" }
+
+              "4_Giờ_(240m)"               { $totalMinutes = 240; $displayTime = "4 giờ" }
+
+              "4_Giờ_30_Phút_(270m)"       { $totalMinutes = 270; $displayTime = "4 giờ 30 phút" }
+
+              "5_Giờ_(300m)"               { $totalMinutes = 300; $displayTime = "5 giờ" }
+
+              "5_Giờ_30_Phút_(330m)"       { $totalMinutes = 330; $displayTime = "5 giờ 30 phút" }
+
+              "6_Giờ_(360m)"               { $totalMinutes = 360; $displayTime = "6 giờ" }
+
+              "30_Ngày_(43200m)"           { $totalMinutes = 43200; $displayTime = "30 ngày" }
+
+              "60_Ngày_(86400m)"           { $totalMinutes = 86400; $displayTime = "60 ngày" }
+
+              "90_Ngày_(129600m)" { $totalMinutes = 129600; $displayTime = "90 ngày" }
 
           }
 
@@ -478,248 +584,150 @@ jobs:
 
 
 
-      # DUY TRÌ PHIÊN LÀM VIỆC Và ỔN ĐỊNH
+        # DUY TRÌ PHIÊN LÀM VIỆC ỔN ĐỊNH Và 90 ngày / 24/7
 
       - name: ⏳ DUY TRÌ PHIÊN LÀM VIỆC
 
+        shell: pwsh
+
         run: |
 
-          $matKhau = Get-Content $env:TEMP\rdp_password.txt -ErrorAction SilentlyContinue
+            $totalMinutes = [int]$env:TOTAL_MINUTES
 
-          $totalMinutes = $env:TOTAL_MINUTES
+            $timeZone = [System.TimeZoneInfo]::FindSystemTimeZoneById("SE Asia Standard Time")
 
-          
+            $startTime = [System.TimeZoneInfo]::ConvertTimeFromUtc((Get-Date).ToUniversalTime(), $timeZone)
 
-          # Tính thời gian chính xác
+            $endTime = $startTime.AddMinutes($totalMinutes)
 
-          $timeZone = [System.TimeZoneInfo]::FindSystemTimeZoneById("SE Asia Standard Time")
+            Write-Host ""
 
-          $thoiGianBatDau = [System.TimeZoneInfo]::ConvertTimeFromUtc((Get-Date).ToUniversalTime(), $timeZone)
+            Write-Host "🔄 BẮT ĐẦU DUY TRÌ PHIÊN LÀM VIỆC..." -ForegroundColor Yellow
 
-          $thoiGianKetThuc = $thoiGianBatDau.AddMinutes($totalMinutes)
+            Write-Host "💎 Phiên: $env:RDP_USER" -ForegroundColor Magenta
 
-          
+            Write-Host "🔗 Kết nối: $env:TAILSCALE_IP" -ForegroundColor Cyan
 
-          Write-Host ""
+            Write-Host "🕐 Bắt đầu: $($startTime.ToString('dd/MM/yyyy HH:mm:ss'))" -ForegroundColor Green
 
-          Write-Host "🔄 BẮT ĐẦU DUY TRÌ PHIÊN LÀM VIỆC..." -ForegroundColor Yellow
+            Write-Host "🕐 Kết thúc: $($endTime.ToString('dd/MM/yyyy HH:mm:ss'))" -ForegroundColor Green
 
-          Write-Host "💎 Phiên: vanmanhgaming" -ForegroundColor Magenta
+            Write-Host ""
 
-          Write-Host "🔗 Kết nối: $env:TAILSCALE_IP" -ForegroundColor Cyan
+            # Giám sát TermService
 
-          Write-Host "🕐 Bắt đầu: $($thoiGianBatDau.ToString('HH:mm:ss'))" -ForegroundColor Green
+            $monitorScript = {
 
-          Write-Host "🕐 Kết thúc: $($thoiGianKetThuc.ToString('HH:mm:ss'))" -ForegroundColor Green
+                while ($true) {
 
-          Write-Host ""
+                    $termService = Get-Service -Name TermService -ErrorAction SilentlyContinue
 
-          
+                    if ($termService.Status -ne 'Running') { Start-Service -Name TermService -ErrorAction SilentlyContinue }
 
-          # Tạo process giám sát hệ thống
+                    Start-Sleep -Seconds 30
 
-          $monitorScript = {
+                }
 
-              $lastLogTime = Get-Date
+            }
 
-              while ($true) {
+            Start-Job -ScriptBlock $monitorScript -Name "SystemMonitor"
 
-                  $currentTime = Get-Date
+            # Kiểm tra 24/7 chỉ khi TOTAL_MINUTES >= 43200
 
-                  
+            $infiniteRun = $totalMinutes -ge 43200
 
-                  # Log trạng thái mỗi 2 phút
+            do {
 
-                  if (($currentTime - $lastLogTime).TotalMinutes -ge 2) {
+                $currentTime = [System.TimeZoneInfo]::ConvertTimeFromUtc((Get-Date).ToUniversalTime(), $timeZone)
 
-                      # Kiểm tra dịch vụ
+                $timeLeft = $endTime - $currentTime
 
-                      $termService = Get-Service -Name TermService -ErrorAction SilentlyContinue
+                $days = [math]::Max(0, [math]::Floor($timeLeft.TotalDays))
 
-                      $rdpConnections = Get-NetTCPConnection -LocalPort 3389 -ErrorAction SilentlyContinue | Where-Object {$_.State -eq 'Established'}
+                $hours = [math]::Max(0, [math]::Floor($timeLeft.TotalHours % 24))
 
-                      
+                $minutes = [math]::Max(0, [math]::Floor($timeLeft.TotalMinutes % 60))
 
-                      Write-Host "[$($currentTime.ToString('HH:mm:ss'))] 📊 Trạng thái - RDP: $($termService.Status), Kết nối: $($rdpConnections.Count)" -ForegroundColor Blue
+                $seconds = [math]::Max(0, [math]::Floor($timeLeft.TotalSeconds % 60))
 
-                      $lastLogTime = $currentTime
+                if ($infiniteRun) {
 
-                  }
+                    Write-Host ("🟢 Chế độ 24/7 đang chạy... Thời gian còn lại: {0} ngày {1} giờ {2} phút {3} giây" -f $days, $hours, $minutes, $seconds) -ForegroundColor Green
 
-                  
+                } else {
 
-                  # Kiểm tra và khởi động lại dịch vụ nếu cần
+                    Write-Host ("⏳ Thời gian còn lại: {0} ngày {1} giờ {2} phút {3} giây" -f $days, $hours, $minutes, $seconds) -ForegroundColor Cyan
 
-                  $termService = Get-Service -Name TermService -ErrorAction SilentlyContinue
+                }
 
-                  if ($termService.Status -ne 'Running') {
+                Start-Sleep -Seconds 5
 
-                      Write-Host "[$($currentTime.ToString('HH:mm:ss'))] 🔄 Khởi động lại TermService..." -ForegroundColor Yellow
+            } while ($infiniteRun -or $timeLeft.TotalSeconds -gt 0)
 
-                      Start-Service -Name TermService -ErrorAction SilentlyContinue
+            Write-Host "🎯 ĐÃ HẾT THỜI GIAN - TỰ ĐỘNG DỪNG!" -ForegroundColor Red
 
-                  }
+            # Dọn dẹp Job giám sát
 
-                  
+            Get-Job -Name "SystemMonitor" -ErrorAction SilentlyContinue | Stop-Job -PassThru | Remove-Job -Force
 
-                  Start-Sleep -Seconds 30
 
-              }
 
-          }
+      # DỌN DẸP CUỐI CÙNG
 
-          
-
-          # Chạy monitor trong background
-
-          Start-Job -ScriptBlock $monitorScript -Name "SystemMonitor"
-
-          
-
-          # Hiển thị timer chính
-
-          $frames = @('⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏')
-
-          $colors = @('Red', 'Yellow', 'Green', 'Cyan', 'Blue', 'Magenta')
-
-          $startTime = Get-Date
-
-          
-
-          do {
-
-              $thoiGianHienTai = [System.TimeZoneInfo]::ConvertTimeFromUtc((Get-Date).ToUniversalTime(), $timeZone)
-
-              $thoiGianConLai = $thoiGianKetThuc - $thoiGianHienTai
-
-              
-
-              $gioConLai = [math]::Max(0, [math]::Floor($thoiGianConLai.TotalHours))
-
-              $phutConLai = [math]::Max(0, [math]::Floor($thoiGianConLai.TotalMinutes % 60))
-
-              $giayConLai = [math]::Max(0, [math]::Floor($thoiGianConLai.TotalSeconds % 60))
-
-              
-
-              $frame = $frames[([int]((Get-Date) - $startTime).TotalSeconds) % $frames.Length]
-
-              $color = $colors[([int]((Get-Date) - $startTime).TotalMinutes) % $colors.Length]
-
-              
-
-              Write-Host "`r$frame [$($thoiGianHienTai.ToString('HH:mm:ss'))] Thời gian còn lại: $gioConLai giờ $phutConLai phút $giayConLai giây" -NoNewline -ForegroundColor $color
-
-              
-
-              Start-Sleep -Seconds 5
-
-              
-
-          } while ($thoiGianConLai.TotalSeconds -gt 0)
-
-          
-
-          Write-Host ""
-
-          Write-Host "🎯 ĐÃ HẾT THỜI GIAN - TỰ ĐỘNG DỪNG!" -ForegroundColor Red
-
-          
-
-          # Dọn dẹp jobs
-
-          Get-Job -Name "SystemMonitor" -ErrorAction SilentlyContinue | Stop-Job -PassThru | Remove-Job -Force
-
-
-
-      # DỌN DẸP CHUYÊN NGHIỆP
-
-      - name: 🧹 DỌN DẸP HỆ THỐNG
+      - name: DỌN DẸP HỆ THỐNG
 
         if: always()
 
+        shell: powershell
+
         run: |
 
           Write-Host ""
 
-          Write-Host "🧹 ĐANG DỌN DẸP HỆ THỐNG..." -ForegroundColor Yellow
+          Write-Host " ĐANG DỌN DẸP HỆ THỐNG..." -ForegroundColor Yellow
 
-          
 
-          $cleanupSteps = @(
 
-              @{Name="Xóa file password"; Script={
+          try { Disable-LocalUser -Name "vanmanhgaming" -ErrorAction SilentlyContinue } catch {}
 
-                  Remove-Item "$env:TEMP\rdp_password.txt" -ErrorAction SilentlyContinue
 
-              }},
 
-              @{Name="Vô hiệu hóa user"; Script={
+          try {
 
-                  Disable-LocalUser -Name "AISTV-PREMIUM" -ErrorAction SilentlyContinue
+              & "$env:ProgramFiles\Tailscale\tailscale.exe" down --accept-risk=all
 
-              }},
+              Start-Sleep -Seconds 5
 
-              @{Name="Đóng kết nối mạng"; Script={
+          } catch {}
 
-                  & "$env:ProgramFiles\Tailscale\tailscale.exe" down --accept-risk=all -ErrorAction SilentlyContinue
 
-                  Start-Sleep -Seconds 5
 
-              }},
+          try {
 
-              @{Name="Xóa rule firewall"; Script={
+              netsh advfirewall firewall delete rule name="RDP-Premium" 2>$null
 
-                  netsh advfirewall firewall delete rule name="RDP-Premium" dir=in -ErrorAction SilentlyContinue
+              netsh advfirewall firewall delete rule name="RDP-Premium-Out" 2>$null
 
-                  netsh advfirewall firewall delete rule name="RDP-Premium-Out" dir=out -ErrorAction SilentlyContinue
+              Remove-NetFirewallRule -DisplayName "RDP-Premium" -ErrorAction SilentlyContinue
 
-                  Remove-NetFirewallRule -DisplayName "RDP-Premium" -ErrorAction SilentlyContinue
+              Remove-NetFirewallRule -DisplayName "RDP-Premium-Out" -ErrorAction SilentlyContinue
 
-                  Remove-NetFirewallRule -DisplayName "RDP-Premium-Out" -ErrorAction SilentlyContinue
+          } catch {}
 
-              }},
 
-              @{Name="Khôi phục cài đặt RDP"; Script={
 
-                  Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 1 -Force -ErrorAction SilentlyContinue
+          try {
 
-                  Stop-Service -Name TermService -Force -ErrorAction SilentlyContinue
+              Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 1 -Force
 
-              }}
+              Stop-Service -Name TermService -Force -ErrorAction SilentlyContinue
 
-          )
+          } catch {}
 
-          
 
-          foreach($step in $cleanupSteps) {
-
-              Write-Host "│ 🗑️  $($step.Name)..." -NoNewline -ForegroundColor Gray
-
-              try {
-
-                  & $step.Script
-
-                  Write-Host "`r│ ✅ $($step.Name)" -ForegroundColor Green
-
-              } catch {
-
-                  Write-Host "`r│ ⚠️  $($step.Name) - Đã xử lý an toàn" -ForegroundColor Yellow
-
-              }
-
-              Start-Sleep -Milliseconds 300
-
-          }
-
-          
-
-          # Dọn dẹp jobs còn sót
 
           Get-Job | Stop-Job -PassThru | Remove-Job -Force -ErrorAction SilentlyContinue
 
-          
 
-          Write-Host ""
 
-          Write-Host "🎉 Dọn dẹp hoàn tất! Hẹn gặp lại! 👋" -ForegroundColor Green
+          Write-Host " Dọn dẹp hoàn tất! Hẹn gặp lại! " -ForegroundColor Green
